@@ -62,53 +62,61 @@ class Person {
   constructor(x, y) {
     this.l = new Vector(x, y);
     this.v = new Vector(0, 0);
-    this.a = new Vector(random(-3, 3), random(3, -3));
+    this.a = new Vector(parseInt(random(-3, 3)), parseInt(random(3, -3)));
     this.v.add(this.a);
     this.infected = false;
     this.quarantine = false;
     this.steerForce = new Vector(0, 0);
     this.moved = false;
     this.accelerate();
-    this.home = new Vector(30, 30);
-    this.home1 = new Vector(windowWidth - 250, 30);
+    this.home = new Vector(35, 30);
+    this.home1 = new Vector(windowWidth - 200, 30);
     this.p = random(1);
   }
   reached(x) {
-    let d = (this.l.x - x.x) ** 2 + (this.l.y - x.y) ** 2;
-    // console.log(d);
-    return d < 10;
+    let xd = abs(parseInt(this.l.x - x.x));
+    let yd = abs(parseInt(this.l.y - x.y));
+
+    // console.log(d, this.l.x - x.x, this.l.y - x.y, this.l, x);
+    if (xd < 71 && yd < 71) {
+      return true;
+    } else {
+      return false;
+    }
   }
   move() {
+    // console.log(this.reached(this.home), this.reached(this.home1));
+
     if (this.quarantine) {
       if (this.p <= 0.2) {
         // dead
         this.a = new Vector(0, 0);
         const sx = this.home.x - this.l.x;
         const sy = this.home.y - this.l.y;
-        const nsx = (sx / abs(sy)) * 12;
-        const nsy = (sy / abs(sy)) * 12;
+        const nsx = (sx / abs(sy)) * 5;
+        const nsy = (sy / abs(sy)) * 5;
         this.steerForce = new Vector(nsx, nsy);
         this.v = this.steerForce;
         this.steerForce = new Vector(0, 0);
-        // if (!this.reached(this.home)) {
-        this.l.add(this.v);
-        // } else {
-        // this.l = this.home;
-        // }
+        if (!this.reached(this.home)) {
+          this.l.add(this.v);
+          // this.l = this.home;
+          // } else {
+        }
       } else {
         this.a = new Vector(0, 0);
         const sx = this.home1.x - this.l.x;
         const sy = this.home1.y - this.l.y;
-        const nsx = (sx / abs(sy)) * 12;
-        const nsy = (sy / abs(sy)) * 12;
+        const nsx = (sx / abs(sy)) * 6;
+        const nsy = (sy / abs(sy)) * 6;
         this.steerForce = new Vector(nsx, nsy);
         this.v = this.steerForce;
         this.steerForce = new Vector(0, 0);
-        // if (!this.reached(this.home1)) {
-        this.l.add(this.v);
-        // } else {
-        // this.l = this.home1;
-        // }
+        if (!this.reached(this.home1)) {
+          this.l.add(this.v);
+          // this.l = this.home1;
+          // } else {
+        }
       }
     } else {
       this.l.add(this.v);
@@ -165,15 +173,18 @@ class Person {
 
 function setup() {
   cvs = createCanvas(windowWidth - 50, windowHeight - 50);
-  w = new World(750);
+  w = new World(500);
 }
 
 function draw() {
   // frameRate(10);
   background(0);
-  noFill();
-  rect(10, 10, 85, 65, 20);
-  rect(windowWidth - 300, 10, 85, 65, 20);
+  // noFill();
+  rect(10, 10, 200, 100, 20);
+  text("dead", 10, 20);
+  rect(windowWidth - 300, 10, 200, 100, 20);
+  text("Recovered", windowWidth - 300, 20);
+
   // console.log(arr[2].l.x, arr[0].l.x);
   w.people.filter(e => !e.infected).length === 0 &&
     w.people.forEach(e => (e.infected = false));
@@ -216,7 +227,9 @@ function draw() {
   // w.stats.push([i, q, d, rec, s].join(",") + "\n");
   w.stats.push([i, q, d, rec, s]);
   if (i === 0 && q !== 0) {
-    noLoop();
+    setTimeout(() => {
+      noLoop();
+    }, 6000);
     // writeFile(w.stats, `corona-sim-data-${infectDelay}.csv`);
   }
 
