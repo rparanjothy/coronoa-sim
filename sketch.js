@@ -62,7 +62,7 @@ class Person {
   constructor(x, y) {
     this.l = new Vector(x, y);
     this.v = new Vector(0, 0);
-    this.a = new Vector(parseInt(random(-3, 3)), parseInt(random(3, -3)));
+    this.a = new Vector(parseInt(random(-2, 2)), parseInt(random(2, -2)));
     this.v.add(this.a);
     this.infected = false;
     this.quarantine = false;
@@ -78,7 +78,7 @@ class Person {
     let yd = abs(parseInt(this.l.y - x.y));
 
     // console.log(d, this.l.x - x.x, this.l.y - x.y, this.l, x);
-    if (xd < 71 && yd < 71) {
+    if (xd < 75 && yd < 75) {
       return true;
     } else {
       return false;
@@ -93,8 +93,8 @@ class Person {
         this.a = new Vector(0, 0);
         const sx = this.home.x - this.l.x;
         const sy = this.home.y - this.l.y;
-        const nsx = (sx / abs(sy)) * 5;
-        const nsy = (sy / abs(sy)) * 5;
+        const nsx = (sx / abs(sy)) * 6;
+        const nsy = (sy / abs(sy)) * 6;
         this.steerForce = new Vector(nsx, nsy);
         this.v = this.steerForce;
         this.steerForce = new Vector(0, 0);
@@ -107,8 +107,8 @@ class Person {
         this.a = new Vector(0, 0);
         const sx = this.home1.x - this.l.x;
         const sy = this.home1.y - this.l.y;
-        const nsx = (sx / abs(sy)) * 6;
-        const nsy = (sy / abs(sy)) * 6;
+        const nsx = (sx / abs(sy)) * 7;
+        const nsy = (sy / abs(sy)) * 7;
         this.steerForce = new Vector(nsx, nsy);
         this.v = this.steerForce;
         this.steerForce = new Vector(0, 0);
@@ -125,9 +125,11 @@ class Person {
 
   reverseX() {
     this.v.x = -1 * this.v.x;
+    this.a.sub(new Vector(0.5, 0.5));
   }
   reverseY() {
     this.v.y = -1 * this.v.y;
+    this.a.sub(new Vector(0.5, 0.5));
   }
 
   infect() {
@@ -173,7 +175,7 @@ class Person {
 
 function setup() {
   cvs = createCanvas(windowWidth - 50, windowHeight - 50);
-  w = new World(500);
+  w = new World(1000);
 }
 
 function draw() {
