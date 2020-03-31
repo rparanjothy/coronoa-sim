@@ -1,3 +1,4 @@
+var infectDelay = prompt("Time Delay to Quarentine", "5000");
 class Vector {
   constructor(x, y) {
     this.x = x;
@@ -29,6 +30,7 @@ class Vector {
 
 class World {
   constructor(population) {
+    this.stats = [["NI", "Q", "D", "R", "S", "\n"].join(",")];
     this.population = population;
     this.s = this.population;
     this.i = 0;
@@ -52,19 +54,34 @@ class Person {
     this.moved = false;
     this.accelerate();
     this.home = new Vector(30, 30);
+    this.home1 = new Vector(windowWidth - 300, 30);
+    this.p = random(1);
   }
 
   move() {
     if (this.quarantine) {
-      this.a = new Vector(0, 0);
-      const sx = this.home.x - this.l.x;
-      const sy = this.home.y - this.l.y;
-      const nsx = (sx / abs(sy)) * 2;
-      const nsy = (sy / abs(sy)) * 2;
-      this.steerForce = new Vector(nsx, nsy);
-      this.v = this.steerForce;
-      this.steerForce = new Vector(0, 0);
-      this.l.add(this.v);
+      if (this.p <= 0.2) {
+        // dead
+        this.a = new Vector(0, 0);
+        const sx = this.home.x - this.l.x;
+        const sy = this.home.y - this.l.y;
+        const nsx = (sx / abs(sy)) * 2;
+        const nsy = (sy / abs(sy)) * 2;
+        this.steerForce = new Vector(nsx, nsy);
+        this.v = this.steerForce;
+        this.steerForce = new Vector(0, 0);
+        this.l.add(this.v);
+      } else {
+        this.a = new Vector(0, 0);
+        const sx = this.home1.x - this.l.x;
+        const sy = this.home1.y - this.l.y;
+        const nsx = (sx / abs(sy)) * 2;
+        const nsy = (sy / abs(sy)) * 2;
+        this.steerForce = new Vector(nsx, nsy);
+        this.v = this.steerForce;
+        this.steerForce = new Vector(0, 0);
+        this.l.add(this.v);
+      }
     } else {
       this.l.add(this.v);
     }
@@ -81,7 +98,7 @@ class Person {
     this.infected = true;
     setTimeout(() => {
       this.quarantine = true;
-    }, 3000);
+    }, parseInt(infectDelay));
   }
 
   accelerate() {
@@ -108,7 +125,7 @@ class Person {
     this.infected ? stroke("rgba(255, 0, 0, 1)") : stroke(255, 255, 255);
     this.infected
       ? this.quarantine
-        ? stroke("rgba(0, 0, 255, .81)")
+        ? stroke("rgba(255, 255, 0, 1)")
         : stroke("rgba(255, 0, 0, 1)")
       : stroke(255, 255, 255);
     this.infected ? strokeWeight(2) : strokeWeight(1);
@@ -124,10 +141,11 @@ function setup() {
 }
 
 function draw() {
-  // frameRate(120);
+  // frameRate(10);
   background(0);
   noFill();
   rect(10, 10, 85, 65, 20);
+  rect(windowWidth - 300, 10, 85, 65, 20);
   // console.log(arr[2].l.x, arr[0].l.x);
   w.people.filter(e => !e.infected).length === 0 &&
     w.people.forEach(e => (e.infected = false));
@@ -161,27 +179,30 @@ function draw() {
   fill(255);
   textSize(15);
   text(`Population - ${w.people.length}`, windowWidth - 200, 20);
-  text(
-    `Infected - ${w.people.filter(e => e.infected && !e.quarantine).length}`,
-    windowWidth - 200,
-    40
-  );
-  text(
-    `Quarentined - ${w.people.filter(e => e.quarantine).length}`,
-    windowWidth - 200,
-    60
-  );
-  text(
-    `Safe - ${w.people.filter(e => !e.infected).length}`,
-    windowWidth - 200,
-    80
-  );
+  const i = w.people.filter(e => e.infected && !e.quarantine).length;
+  const q = w.people.filter(e => e.quarantine).length;
+  const s = w.people.filter(e => !e.infected).length;
+
+  text(`Newly Infected - ${i}`, windowWidth - 200, 40);
+  text(`Quarentined - ${q}`, windowWidth - 200, 60);
+  text(`Safe - ${s}`, windowWidth - 200, 80);
+  const d = w.people.filter(e => e.quarantine && e.p <= 0.2).length;
+  const rec = q - d;
+  text(`Dead - ${d}`, windowWidth - 200, 100);
+  text(`Recovered - ${rec}`, windowWidth - 200, 120);
+
+  w.stats.push([i, q, d, rec, s].join(",") + "\n");
+
+  if (i === 0 && q !== 0) {
+    noLoop();
+    writeFile(w.stats, `corona-sim-data-${infectDelay}.csv`);
+  }
 }
 
-function mousePressed() {
-  noLoop();
-}
+// function mousePressed() {
+//   noLoop();
+// }
 
-function mouseReleased() {
-  loop();
-}
+// function mouseReleased() {
+//   loop();
+// }
