@@ -213,6 +213,7 @@ class Person {
 function setup() {
   cvs = createCanvas(windowWidth - 50, windowHeight - 50);
   w = new World(750);
+  w.people[0].infect();
 }
 
 function draw() {
@@ -231,7 +232,7 @@ function draw() {
   w.people.forEach((person, idx, arr) => {
     person.accelerate();
     person.move();
-    idx == 0 && person.infect();
+    // idx == 0 && person.infect();
 
     arr
       .filter(e => !e.infected)
@@ -269,12 +270,6 @@ function draw() {
     setTimeout(() => {
       noLoop();
     }, 6000);
-    // writeFile(w.stats, `corona-sim-data-${infectDelay}.csv`);
-  }
-  if (i >= w.population * 0.65) {
-    setTimeout(() => {
-      noLoop();
-    }, 60);
     // writeFile(w.stats, `corona-sim-data-${infectDelay}.csv`);
   }
 
