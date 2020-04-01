@@ -51,7 +51,8 @@ class World {
           random(width * 0.25, width * 0.75),
           // random(width * 0.25, width * 0.75),
           // random(height * 0.125, height * 0.325)
-          random(height * 0.125, height * 0.325)
+          random(height * 0.125, height * 0.325),
+          i
         )
       );
     }
@@ -59,31 +60,55 @@ class World {
 }
 
 class Person {
-  constructor(x, y) {
+  constructor(x, y, i) {
+    this.idx = i;
     this.l = new Vector(x, y);
     this.v = new Vector(0, 0);
-    this.a = new Vector(parseInt(random(-2, 2)), parseInt(random(2, -2)));
+    this.a = new Vector(parseInt(random(-3, 3)), parseInt(random(3, -3)));
     this.v.add(this.a);
     this.infected = false;
     this.quarantine = false;
     this.steerForce = new Vector(0, 0);
-    this.moved = false;
     this.accelerate();
-    this.home = new Vector(35, 30);
-    this.home1 = new Vector(windowWidth - 200, 30);
+    this.home = new Vector(35, 40);
+    this.home1 = new Vector(windowWidth - 200, 40);
     this.p = random(1);
+    this.reachedFlag = false;
+    this.dead = false;
+    this.recycled = false;
   }
+
+  recycle() {
+    if (this.reachedFlag) {
+      const pidx = this.idx;
+      w.people.splice(
+        this.idx,
+        1,
+        new Person(
+          random(width * 0.25, width * 0.75),
+          random(height * 0.125, height * 0.325),
+          pidx
+        )
+      );
+    }
+  }
+
   reached(x) {
     let xd = abs(parseInt(this.l.x - x.x));
     let yd = abs(parseInt(this.l.y - x.y));
 
     // console.log(d, this.l.x - x.x, this.l.y - x.y, this.l, x);
-    if (xd < 75 && yd < 75) {
+    if (xd <= 10 && yd <= 10) {
+      this.reachedFlag = true;
+      setTimeout(() => {
+        this.recycle();
+      }, 5000);
       return true;
     } else {
       return false;
     }
   }
+
   move() {
     // console.log(this.reached(this.home), this.reached(this.home1));
 
@@ -93,25 +118,29 @@ class Person {
         this.a = new Vector(0, 0);
         const sx = this.home.x - this.l.x;
         const sy = this.home.y - this.l.y;
-        const nsx = (sx / abs(sy)) * 6;
-        const nsy = (sy / abs(sy)) * 6;
+        const nsx = (sx / abs(sx)) * 14;
+        const nsy = (sy / abs(sx)) * 1;
         this.steerForce = new Vector(nsx, nsy);
+        // this.steerForce.mul(new Vector(5, 5));
         this.v = this.steerForce;
-        this.steerForce = new Vector(0, 0);
+        // this.steerForce = new Vector(0, 0);
         if (!this.reached(this.home)) {
           this.l.add(this.v);
           // this.l = this.home;
           // } else {
+        } else {
+          this.dead = true;
         }
       } else {
         this.a = new Vector(0, 0);
         const sx = this.home1.x - this.l.x;
         const sy = this.home1.y - this.l.y;
-        const nsx = (sx / abs(sy)) * 7;
-        const nsy = (sy / abs(sy)) * 7;
+        const nsx = (sx / abs(sx)) * 40 - 1;
+        const nsy = (sy / abs(sx)) * 1 + 1;
         this.steerForce = new Vector(nsx, nsy);
+        // this.steerForce.mul(new Vector(5, 5));
         this.v = this.steerForce;
-        this.steerForce = new Vector(0, 0);
+        // this.steerForce = new Vector(0, 0);
         if (!this.reached(this.home1)) {
           this.l.add(this.v);
           // this.l = this.home1;
@@ -160,22 +189,30 @@ class Person {
   }
 
   show() {
-    this.infected ? stroke("rgba(255, 0, 0, 1)") : stroke(255, 255, 255);
-    this.infected
-      ? this.quarantine
-        ? stroke("rgba(255, 255, 0, 1)")
-        : stroke("rgba(255, 0, 0, 1)")
-      : stroke(255, 255, 255);
-    this.infected ? strokeWeight(2) : strokeWeight(1);
-    !this.infected ? noFill() : fill("rgba(255, 0, 0, 0.3)");
+    if (this.infected && !this.quarantine) {
+      strokeWeight(2);
+      stroke("rgba(255, 0, 0, 1)");
+      fill("rgba(255, 0, 0, 0.7)");
+    }
+    if (this.quarantine) {
+      strokeWeight(1);
+      stroke("rgba(255, 255, 0, 1)");
+      fill("rgba(255, 255, 0, .41)");
+    }
+
+    if (!this.infected && !this.quarantine) {
+      strokeWeight(1);
+      stroke("rgba(255, 255, 255, 1)");
+      fill("rgba(255, 255, 255, .71)");
+    }
+
     ellipse(this.l.x, this.l.y, 5, 5);
-    // point(this.l.x, this.l.y);
   }
 }
 
 function setup() {
   cvs = createCanvas(windowWidth - 50, windowHeight - 50);
-  w = new World(1000);
+  w = new World(750);
 }
 
 function draw() {
@@ -234,6 +271,12 @@ function draw() {
     }, 6000);
     // writeFile(w.stats, `corona-sim-data-${infectDelay}.csv`);
   }
+  if (i >= w.population * 0.65) {
+    setTimeout(() => {
+      noLoop();
+    }, 60);
+    // writeFile(w.stats, `corona-sim-data-${infectDelay}.csv`);
+  }
 
   w.stats.forEach((e, idx) => {
     strokeWeight(1);
@@ -245,32 +288,32 @@ function draw() {
     textSize(18);
     stroke("white"); // Change the color
     text(`Population - ${w.people.length}`, windowWidth - 400, height - 220);
-
+    const dot = 1;
     stroke("red"); // Change the color
     fill("black");
-    strokeWeight(2);
-    ellipse(idx + 100, parseInt(y), 2);
+    strokeWeight(5);
+    ellipse(idx + 95, parseInt(y), dot);
     text(`Newly Infected - ${i}`, windowWidth - 400, height - 200);
 
     stroke("yellow"); // Change the color
-    ellipse(idx + 100, parseInt(y1), 2);
+    ellipse(idx + 95, parseInt(y1), dot);
     text(`Quarentined - ${q}`, windowWidth - 400, height - 180);
 
     stroke("gray"); // Change the color
-    ellipse(idx + 100, parseInt(y2), 2);
+    ellipse(idx + 95, parseInt(y2), dot);
     text(`Dead - ${d}`, windowWidth - 400, height - 160);
 
     stroke("green"); // Change the color
-    ellipse(idx + 100, parseInt(y3), 2);
+    ellipse(idx + 95, parseInt(y3), dot);
     text(`Recovered - ${rec}`, windowWidth - 400, height - 140);
 
     stroke("purple"); // Change the color
-    ellipse(idx + 100, parseInt(y4), 2);
+    ellipse(idx + 95, parseInt(y4), dot);
     text(`Safe - ${s}`, windowWidth - 400, height - 120);
 
     stroke("white"); // Change the color
-    ellipse(idx + 100, height, 2);
-    line(100, height, 100, height - w.population * (400 / height));
+    ellipse(idx + 95, height, dot);
+    line(95, height, 95, height - w.population * (400 / height));
   });
 }
 
